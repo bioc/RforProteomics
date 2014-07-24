@@ -19,7 +19,7 @@ all:
 
 setvars:
 ifeq (${R_HOME},)
-R_HOME= $(shell R RHOME)
+R_HOME= $(shell R-stable RHOME)
 endif
 
 vig:

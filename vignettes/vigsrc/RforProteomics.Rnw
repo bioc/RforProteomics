@@ -72,7 +72,7 @@
 
 \affil{
   \small
-  $^1$Cambridge Center for Proteomics, University of Cambridge, UK \\
+  $^1$Computational Proteomics Unit, University of Cambridge, UK \\
   $^2$Institute for Medical Informatics, Statistics and Epidemiology, University of Leipzig, Germany 
 }
 
@@ -95,10 +95,13 @@ options(width = 60)
 @
 %% $
 
-<<'env0', echo = FALSE>>=
-library(xtable)
+<<'env0', echo = FALSE, warning = FALSE, message=FALSE>>=
+library("xtable")
+suppressPackageStartupMessages(library("RforProteomics"))
+suppressPackageStartupMessages(library("BiocInstaller"))
 ## suppressPackageStartupMessages(library("parallel"))
 suppressPackageStartupMessages(library("MSnbase"))
+suppressPackageStartupMessages(library("mzID"))
 suppressPackageStartupMessages(library("rpx"))
 suppressPackageStartupMessages(library("isobar"))
 suppressPackageStartupMessages(library("MALDIquant"))   
@@ -119,12 +122,12 @@ suppressPackageStartupMessages(library("rTANDEM"))
 \begin{abstract}
   This vignette shows and executes the code presented in the
   manuscript \textit{Using \R for proteomics data analysis}.  It also
-  aims at being a general overview useful for new users who wish to
-  explore the \R environment and programming language for the analysis
-  of proteomics data.
+  aims at being a general overview for users who wish to explore the
+  \R environment and programming language for the analysis of
+  proteomics data.
 \end{abstract}
 
-\textit{Keywords}: bioinformatics, proteomics, mass spectrometry, tutorial.
+\textit{Keywords}: proteomics, mass spectrometry, tutorial.
 \vskip 0.1in minus 0.05in
 \hrule
 \vskip 0.2in minus 0.1in
@@ -145,7 +148,7 @@ suppressPackageStartupMessages(library("rTANDEM"))
 This document illustrates some existing \R infrastructure for the
 analysis of proteomics data.  It presents the code for the use cases
 taken from \cite{R4prot2013}. A pre-print of the manuscript is
-avaiable on arXiv\footnote{\url{http://arxiv.org/abs/1305.6559}}.
+available on arXiv\footnote{\url{http://arxiv.org/abs/1305.6559}}.
 
 There are however numerous additional \R resources distributed by the
 Bioconductor\footnote{\url{http://www.bioconductor.org}} and
@@ -219,7 +222,7 @@ main \texttt{Bioconductor} list is the most relevant one. It is
 possible to
 post\footnote{\url{http://bioconductor.org/help/mailing-list/mailform/}}
 questions without subscribing to the list. Finally, the dedicated
-\Rpackage{RforProteomics} google
+\Rpackage{RforProteomics} Google
 group\footnote{\url{https://groups.google.com/forum/\#!forum/rbioc-sig-proteomics}}
 welcomes questions/comments/annoucements related to \R and
 mass-spectrometry/proteomics.
@@ -249,8 +252,8 @@ library("BiocInstaller")
 biocLite("RforProteomics")
 @ 
 
-To install all dependencies (78 packages) and reproduce the code in
-the vignette, replace the last line in the code chunk above with:)
+To install all dependencies and reproduce the code in the vignette,
+replace the last line in the code chunk above with:)
 
 <<installation2, eval = FALSE>>=
 biocLite("RforProteomics", dependencies = TRUE)
@@ -272,15 +275,19 @@ Some packages used in the document depend on external libraries that
 need to be installed prior to the \R packages:
 
 \begin{description}
-  \item[\Rpackage{mzR}] depends on the Common Data Format\footnote{\url{http://cdf.gsfc.nasa.gov/}} (CDF) 
-    to CDF-based raw mass-spectrometry data. On linux, the \texttt{libcdf} library is required. 
-    On debian-based systems, for instance, one needs to install the \texttt{libnetcdf-dev} package.
-  \item[\Rpackage{IPPD}] (and others) depend on the \Rpackage{XML} package which requires the \texttt{libxml2} 
-    infrastructure on linux. On debian-based systems, one needs to install \texttt{libxml2-dev}.
-  \item [\Rpackage{biomaRt}] performs on-line requests using the 
-    \texttt{curl}\footnote{\url{http://curl.haxx.se/}} 
-    infrastructure. On debian-based systems, you one needs to install  
-    \texttt{libcurl-dev} or \texttt{libcurl4-openssl-dev}.
+\item[\Rpackage{mzR}] depends on the Common Data
+  Format\footnote{\url{http://cdf.gsfc.nasa.gov/}} (CDF) to CDF-based
+  raw mass-spectrometry data. On Linux, the \texttt{libcdf} library is
+  required.  On Debian-based systems, for instance, one needs to
+  install the \texttt{libnetcdf-dev} package.
+\item[\Rpackage{IPPD}] (and others) depend on the \Rpackage{XML}
+  package which requires the \texttt{libxml2} infrastructure on
+  Linux. On Debian-based systems, one needs to install
+  \texttt{libxml2-dev}.
+\item [\Rpackage{biomaRt}] performs on-line requests using the 
+  \texttt{curl}\footnote{\url{http://curl.haxx.se/}} 
+  infrastructure. On Debian-based systems, you one needs to install  
+  \texttt{libcurl-dev} or \texttt{libcurl4-openssl-dev}.
 \end{description}
 
 \subsection{Obtaining the code}
@@ -289,7 +296,7 @@ The code in this document describes all the examples presented in
 \cite{R4prot2013} and can be copy, pasted and executed. It is however
 more convenient to have it in a separate text file for better
 interaction with \R (using
-ESS\footnote{\url{http://ess.r-project.org/}} for emacs or
+ESS\footnote{\url{http://ess.r-project.org/}} for Emacs or
 RStudio\footnote{\url{http://rstudio.org/}} for instance) to easily
 modify and explore it. This can be achieved with the
 \Rfunction{Stangle} function. One needs the Sweave source of this
@@ -362,6 +369,31 @@ close(mz)
 \Rpackage{xcms} \cite{Smith2006, Benton2008, Tautenhahn2008}, that
 provide a higher level abstraction to the data.
 
+\subsection{Handling MS$^2$ identification data with \Rpackage{mzID}}
+
+The \Rpackage{mzID} package allows to load and manipulate MS$^2$ data
+in the \texttt{mzIdentML} format. The main \Rfunction{mzID} function
+reads such a file and constructs an instance of class \Robject{mzID}.
+
+<<mzid>>=
+library("mzID")
+id <- mzID("http://psi-pi.googlecode.com/svn/trunk/examples/1_1examples/55merge_tandem.mzid")
+id
+@
+
+Peptides, scans, parameters, \ldots can be extracted with the
+respective \Rfunction{pepetides}, \Rfunction{scans},
+\Rfunction{parameters}, \ldots functions. The \Robject{mzID} object
+can also be converted into a \texttt{data.frame} using the
+\Rfunction{flatten} function.
+
+<<flatid>>=
+fid <- flatten(id)
+names(fid)
+dim(fid)
+@
+
+
 \section{Raw data abstraction with \Robject{MSnExp} objects}
 
 \Rpackage{MSnbase} \cite{Gatto2012} provides base functions and
@@ -403,7 +435,7 @@ and \texttt{mzTab}\footnote{\url{https://code.google.com/p/mztab/}}
 formats are available via the
 \Rfunction{readMgfData}/\Rfunction{writeMgfData} and
 \Rfunction{readMzTabData}/\Rfunction{writeMzTabData} functions,
-respectively.  An example for the latter is shown in the next section.
+respectively. An example for the latter is shown in the next section.
 
 \section{Quantitative proteomics}
 
@@ -545,12 +577,19 @@ specifying the TMT 6-plex isobaric tags and a 7$^{th}$ peak of
 interest corresponding to the un-dissociated reporter tag peaks (see
 the \texttt{MSnbase-demo} vignette in \Rpackage{MSnbase} for details).
 
-<<mzxml, cache=TRUE>>=
+<<mzxmlqnt, cache=TRUE>>=
 mzxml <- pxget(px1, "TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.mzXML")
 rawms <- readMSData(mzxml, centroided = TRUE, verbose = FALSE)
-qntms <- quantify(rawms, reporters = TMT7, method = "max", 
-                  verbose = FALSE, parallel = FALSE)
+qntms <- quantify(rawms, reporters = TMT7, method = "max", verbose = FALSE)
+qntms
+@
 
+Identification data in the \texttt{mzIdentML} format can be added to
+\Robject{MSnExp} or \Robject{MSnSet} instances with the
+\Rfunction{addIdentificationData} function. See the function
+documentation for examples.
+
+<<qntdf>>=
 d <- data.frame(Signal = rowSums(exprs(qntms)[, 1:6]),
                 Incomplete = exprs(qntms)[, 7])
 d <- log(d)
@@ -607,8 +646,9 @@ MAplot(qnt[, c(4, 2)], cex = .9, col = cls, pch = pch, show.statistics = FALSE)
 
 \subsection{The \Rpackage{MALDIquant} package}
 
-This section illustrates some of \Rpackage{MALDIquant}'s data processing capabilities \cite{Gibb2012}. 
-The code is taken from the \texttt{processing-peaks.R} script downloaded from the package 
+This section illustrates some of \Rpackage{MALDIquant}'s data
+processing capabilities \cite{Gibb2012}.  The code is taken from the
+\texttt{processing-peaks.R} script downloaded from the package
 homepage\footnote{\url{http://strimmerlab.org/software/maldiquant/}}.
 
 \subsubsection*{Loading the data}
@@ -766,9 +806,11 @@ cleave("LAAGKVEDSD", enzym = "trypsin", missedCleavages = 0:1)
 @
 
 
-Example code to generate an Texshade image to be included directly in a Latex document or \R vignette is presented below. 
-The \R code generates a Texshade environment and the annotated sequence display code that is written to a \TeX~file that can 
-itself be included into a \LaTeX~of Sweave document. 
+Example code to generate an Texshade image to be included directly in
+a Latex document or \R vignette is presented below.  The \R code
+generates a Texshade environment and the annotated sequence display
+code that is written to a \TeX~file that can itself be included into a
+\LaTeX~of Sweave document.
 
 {\scriptsize
 \begin{verbatim}
@@ -821,8 +863,6 @@ for (i in 1:length(inc))
 
 The \Rpackage{isobar} package \cite{Breitwieser2011} provides methods for the statistical
 analysis of isobarically tagged MS$^2$ experiments.
-
-
 
 %% <<isobarfix, echo=TRUE>>=
 %% ## temporary local fix 
@@ -935,8 +975,7 @@ rat.exp <- c(PHO = 2/2,
 
 
 \begin{figure}[!ht]
-<<ibplot, dev='pdf', echo=TRUE, fig.width=10, fig.height=5, fig.keep='last', out.width='1\\linewidth'>>=
-par(mfrow = c(1,2))
+<<ibplot, dev='pdf', echo=TRUE, fig.width=5, fig.height=5, fig.keep='last'>>=
 maplot(x,
        noise.model = c(nm.background, nm.spks, nm),
        channel1="127", channel2="129",
@@ -948,23 +987,6 @@ legend("topright",
        pch = 19, col = c("gold4", "dodgerblue", 
                    "springgreen4", "darkorchid2"),
        bty = "n", cex = .7) 
-plot(res$lratio, -log10(res$p.value.rat), col = cls3, pch = pch3,
-     xlab = expression(log[10]~fold-change),
-     ylab = expression(-log[10]~p-value),
-     main = "Protein volcano plot", 
-     xlim = c(-0.7, 0.7))
-grid()
-abline(h = -log10(0.01), lty = "dotted")
-abline(v = log10(c(2, 0.5)), lty = "dotted")
-abline(v = -0.003, col = "springgreen4", lty = "dashed", lwd = 2)
-abline(v = 0.003, col = "darkorchid2", lty = "dashed", lwd = 2)
-abline(v = log10(5), col = "dodgerblue", lty = "dashed", lwd = 2)
-abline(v = log10(0.25), col = "gold4", lty = "dashed", lwd = 2)
-points(res[spks, "lratio"], 
-       -log10(res[spks, "p.value.rat"]), 
-       col = c("darkorchid2", "dodgerblue", 
-         "gold4", "springgreen4"),
-       pch = 19)
 @ 
 \caption{Result from the \Rpackage{isobar} pipeline. }
 \label{fig:ibplot}
@@ -974,7 +996,13 @@ points(res[spks, "lratio"],
 
 \subsection{The \Rpackage{synapter} package}
 
-The \Rpackage{synapter} \cite{synapter} package comes with a detailed vignette that describes how to prepare the MS$^E$ data and then process it in \R. Several interfaces are available provided the user with maximum control, easy batch processing capabilities or a graphical user interface. The conversion into \Robject{MSnSet} instances and filter and combination thereof as well as statistical analysis are also described. 
+The \Rpackage{synapter} \cite{synapter} package comes with a detailed
+vignette that describes how to prepare the MS$^E$ data and then
+process it in \R. Several interfaces are available provided the user
+with maximum control, easy batch processing capabilities or a
+graphical user interface. The conversion into \Robject{MSnSet}
+instances and filter and combination thereof as well as statistical
+analysis are also described.
 
 <<synapter, eval=FALSE>>=
 ## open the synapter vignette
@@ -994,7 +1022,8 @@ A typical \Rpackage{rTANDEM} pipeline comprises
 \item Import the search results and extract the peptides and proteins
 \end{enumerate}
 
-Using example code/data from the \Rpackage{rTANDEM} vignette/package, these steps are executed as described below.
+Using example code/data from the \Rpackage{rTANDEM} vignette/package,
+these steps are executed as described below.
 
 \subsection{Preparation of the input data}
 
@@ -1032,8 +1061,9 @@ param <- setParamValue(param, 'output', 'path',
 
 \subsection{Performing the search}
 
-The analysis is run using the \Rfunction{tandem} function (see also the \Rfunction{rtandem} function), 
-which returns the results data file path (only the file name is displayed below).
+The analysis is run using the \Rfunction{tandem} function (see also
+the \Rfunction{rtandem} function), which returns the results data file
+path (only the file name is displayed below).
 
 <<rtanem2>>=
 resultPath <- tandem(param)
@@ -1056,16 +1086,24 @@ peptides <- GetPeptides(protein.uid = 1811,
 peptides[, c(1:4, 9, 10:16), with = FALSE]
 @ 
 
-More details are provided in the vignette available with \Rfunction(vignette("rTANDEM")), 
-for instance the extraction of degenerated peptides, i.e. peptides found in multiple proteins.
+More details are provided in the vignette available with
+\Rfunction(vignette("rTANDEM")), for instance the extraction of
+degenerated peptides, i.e. peptides found in multiple proteins.
+
+\bigskip
+
+The \Rpackage{shinyTANDEM} package offers a web-based graphical
+interface to \Rpackage{rTANDEM}.
 
 \section{Annotation}
 
-In this section, we briefly present some Bioconductor annotation infrastructure. 
+In this section, we briefly present some Bioconductor annotation
+infrastructure.
 
-We start with the \Rpackage{hpar} package, an interface to the \textit{Human Protein Atlas} 
-\cite{Uhlen2005, Uhlen2010}, to retrieve subcellular localisation information for the 
-\texttt{ENSG00000002746} ensemble gene.
+We start with the \Rpackage{hpar} package, an interface to the
+\textit{Human Protein Atlas} \cite{Uhlen2005, Uhlen2010}, to retrieve
+subcellular localisation information for the \texttt{ENSG00000002746}
+ensemble gene.
 
 <<annot1, cache=FALSE>>=
 id <- "ENSG00000002746"
@@ -1073,9 +1111,9 @@ library("hpar")
 getHpa(id, "SubcellularLoc")
 @
 
-Below, we make use of the human annotation package \Rpackage{org.Hs.eg.db} and 
-the Gene Ontology annotation package \Rpackage{GO.db} to retrieve the same 
-information as above.
+Below, we make use of the human annotation package
+\Rpackage{org.Hs.eg.db} and the Gene Ontology annotation package
+\Rpackage{GO.db} to retrieve the same information as above.
 
 <<annot2, cache=FALSE, warning = FALSE>>=
 library(org.Hs.eg.db)
@@ -1088,10 +1126,10 @@ ans
 sapply(as.list(GOTERM[ans$GO]), slot, "Term")
 @ 
 
-Finally, this information can also be retrieved from on-line databases using the 
-\Rpackage{biomaRt} package \cite{Durinck2005}.
+Finally, this information can also be retrieved from on-line databases
+using the \Rpackage{biomaRt} package \cite{Durinck2005}.
 
-<<annot3, cache=FALSE>>=
+<<annot3, cache=TRUE>>=
 library("biomaRt")
 ensembl <- useMart("ensembl",dataset="hsapiens_gene_ensembl")
 efilter <- "ensembl_gene_id"
@@ -1110,89 +1148,79 @@ bmres[bmres$namespace_1003 == "cellular_component", "name_1006"]
 
 \subsection{Bioconductor packages}
 
-<<gist4493747, echo=FALSE, warning=FALSE, cache=FALSE>>=
+
+<<protpacks, echo=FALSE, warning=FALSE, cache=TRUE>>=
 # biocVersion has to be of type character
-biocv <- "2.13"
+biocv <- as.character(biocVersion())
 
-getPackagesInBiocView <- function(view, 
-                                  rep = c("BioCsoft", "BioCann",
-                                      "BioCexp", "BioCextra"),
-                                  biocVersion = biocv) {
-    suppressPackageStartupMessages(require("biocViews"))
-    data(biocViewsVocab)
-    rep <- match.arg(rep)
-    biocMirror <- getOption("BioC_mirror", "http://bioconductor.org")
-    biocPaths <- switch(rep,         
-                        BioCsoft = "bioc",
-                        BioCann = "data/annotation", 
-                        BioCexp = "data/experiment",
-                        BioCextra = "extra")   
-    rep <- paste(biocMirror,
-                 "packages",
-                 biocVersion,
-                 biocPaths, 
-                 sep = "/") 
-    bv <- getBiocViews(rep, biocViewsVocab, "NoViewProvided")
-    if (!view %in% names(bv)) {
-        message("BiocView ", view, " not found.")
-        return(NULL)
-    }  
-    return(bv[[view]])
-}
-
-pk <- list(Proteomics = getPackagesInBiocView("Proteomics"),
-           MassSpectrometryData = getPackagesInBiocView("MassSpectrometryData", rep = "BioCexp"),
-           MassSpectrometry = getPackagesInBiocView("MassSpectrometry"))
-
-.makePackageTable <- function(x, nsub = TRUE) {
-  Package <- sapply(x@packageList, function(x) x@Package)
-  Title <- sapply(x@packageList, function(x) x@Title)
-  if (nsub)
-    Title <- sub("\n", " ", Title)
-  return(data.frame(Package, Title))
-}
-
-pkTab <- lapply(pk, .makePackageTable)
+pkTab <- list(Proteomics = proteomicsPackages(biocv),
+              MassSpectrometry = massSpectrometryPackages(biocv),
+              MassSpectrometryData = massSpectrometryDataPackages(biocv))
 @ 
 
-This section provides a complete list of packages available in the relevant Bioconductor version \Sexpr{biocv} 
-(as of \today) \textit{biocView}\footnote{\url{http://www.bioconductor.org/packages/devel/BiocViews.html}} categories. 
-Tables \ref{tab:prot}, \ref{tab:ms} and \ref{tab:msdata} represent the packages for the 
-\texttt{Proteomics} (\Sexpr{nrow(pkTab[["Proteomics"]])} packages), 
-\texttt{MassSpectrometry} (\Sexpr{nrow(pkTab[["MassSpectrometry"]])} packages) and
-\texttt{MassSpectrometryData} (\Sexpr{nrow(pkTab[["MassSpectrometryData"]])} experiment packages)
+This section provides a complete list of packages available in the
+relevant Bioconductor version \Sexpr{biocv} (as of \today)
+\textit{biocView}\footnote{\url{http://www.bioconductor.org/packages/devel/BiocViews.html}}
+categories.  Tables \ref{tab:prot}, \ref{tab:ms} and \ref{tab:msdata}
+represent the packages for the \texttt{Proteomics}
+(\Sexpr{nrow(pkTab[["Proteomics"]])} packages),
+\texttt{MassSpectrometry} (\Sexpr{nrow(pkTab[["MassSpectrometry"]])}
+packages) and \texttt{MassSpectrometryData}
+(\Sexpr{nrow(pkTab[["MassSpectrometryData"]])} experiment packages)
 categories.
 
 <<protstab, echo=FALSE, results='asis'>>=
-print(xtable(pkTab[["Proteomics"]],
+t1 <- xtable(pkTab[["Proteomics"]],
              caption = "Packages available under the \\texttt{Proteomics} \\textit{biocViews} category.",
              table.placement = "thb",
-             align = c("llL"),
-             label = "tab:prot"),
+             label = "tab:prot")
+align(t1) <- c("l", "l", "p{10cm}", "l")
+print(t1, 
       include.rownames = FALSE,
-      tabular.environment = "tabulary",       
-      width = "1\\textwidth",
+      floating = FALSE,
+      tabular.environment = 'longtable',
       size = "scriptsize")
 @ 
 
 <<mstab, echo=FALSE, results='asis'>>=
-print(xtable(pkTab[["MassSpectrometry"]],
+t2 <- xtable(pkTab[["MassSpectrometry"]],
              caption = "Packages available under the \\texttt{MassSpectrometry} \\textit{biocViews} category.",
              table.placement = "thb",
-             label = "tab:ms"),
+             label = "tab:ms")
+align(t2) <- c("l", "l", "p{10cm}", "l")
+print(t2, 
       include.rownames = FALSE,
+      floating = FALSE,
+      tabular.environment = 'longtable',
       size = "scriptsize")
+
 @ 
 
 <<msdatatab, echo=FALSE, results='asis'>>=
-print(xtable(pkTab[["MassSpectrometryData"]],
+t3 <- xtable(pkTab[["MassSpectrometryData"]],
              caption = "Experimental Packages available under the \\texttt{MassSpectrometryData} \\textit{biocViews} category.",
              table.placement = "thb",
-             label = "tab:msdata"),
+             label = "tab:msdata")
+align(t3) <- c("l", "l", "p{10cm}", "l")
+print(t3, 
       include.rownames = FALSE,
+      floating = FALSE,
+      tabular.environment = 'longtable',
       size = "scriptsize")
 @ 
 
+The tables can easily be generated with the
+\Rfunction{proteomicsPackages}, \Rfunction{massSpectrometryPackages}
+and \Rfunction{massSpectrometryDataPackages} functions. The respective
+package tables can then be interactively explored using the
+\Rfunction{display} function.
+
+<<pkgs, eval=FALSE>>=
+pp <- proteomicsPackages()
+display(pp)
+@
+
+\subsection{The Chemometrics and Computational Physics CRAN Task View}
 
 <<cntCRAN, echo=FALSE>>=
 X <- readLines("http://cran.r-project.org/web/views/ChemPhys.html")
@@ -1201,50 +1229,53 @@ x1 <- grep("CRAN packages:", X)
 np <- length(grep("../packages/", X[x1:x2]))
 @ 
 
-\subsection{The Chemometrics and Computational Physics CRAN Task View}
-
-The CRAN task view on Chemometrics and Computational 
+The CRAN task view on Chemometrics and Computational
 Physics\footnote{\url{http://cran.r-project.org/web/views/ChemPhys.html}}
-lists \Sexpr{np} packages, including a set of packages for 
-mass spectrometry and proteomics, some of which are illustrated in this document. 
-The most relevant (non Bioconductor) packages are summarised below.
+lists \Sexpr{np} packages, including a set of packages for mass
+spectrometry and proteomics, some of which are illustrated in this
+document.  The most relevant (non Bioconductor) packages are
+summarised below.
 
 \begin{description}
-  \item[MALDIquant] 
-    provides tools for quantitative analysis of MALDI-TOF mass spectrometry data, 
-    with support for baseline correction, peak detection and plotting of 
-    mass spectra \\
-    (\url{http://cran.r-project.org/web/packages/MALDIquant/index.html}).
-  \item[OrgMassSpecR] 
-    is for organic/biological mass spectrometry, with a focus on graphical display, 
-    quantification using stable isotope dilution, and protein hydrogen/deuterium exchange 
-    experiments \\
-    (\url{http://cran.r-project.org/web/packages/OrgMassSpecR/index.html}).
-  \item[FTICRMS] 
-    provides functions for Analyzing Fourier Transform-Ion Cyclotron 
-    Resonance Mass Spectrometry Data \\
-    (\url{http://cran.r-project.org/web/packages/FTICRMS/index.html}).
-  \item[titan]
-    provides a GUI to analyze mass spectrometric data on the relative abundance 
-    of two substances from a titration series \\
-    (\url{http://cran.r-project.org/web/packages/titan/index.html}).
+\item[MALDIquant] provides tools for quantitative analysis of
+  MALDI-TOF mass spectrometry data, with support for baseline
+  correction, peak detection and plotting of
+  mass spectra \\
+  (\url{http://cran.r-project.org/web/packages/MALDIquant/index.html}).
+\item[OrgMassSpecR] is for organic/biological mass spectrometry, with
+  a focus on graphical display, quantification using stable isotope
+  dilution, and protein hydrogen/deuterium exchange
+  experiments \\
+  (\url{http://cran.r-project.org/web/packages/OrgMassSpecR/index.html}).
+\item[FTICRMS] provides functions for Analyzing Fourier Transform-Ion
+  Cyclotron
+  Resonance Mass Spectrometry Data \\
+  (\url{http://cran.r-project.org/web/packages/FTICRMS/index.html}).
+\item[titan] provides a GUI to analyze mass spectrometric data on the
+  relative abundance
+  of two substances from a titration series \\
+  (\url{http://cran.r-project.org/web/packages/titan/index.html}).
 \end{description}
 
 \subsection{Other CRAN packages}
 
-Finally, \Rpackage{digeR}\footnote{\url{http://cran.r-project.org/web/packages/digeR/index.html}}, 
-which is available on CRAN but not listed in the Chemometrics and Computational Physics Task View, 
-provides a GUI interface for analysing 2D DIGE data. It allows to 
-perform correlation analysis, score plot, classification, 
-feature selection and power analysis for 2D DIGE experiment data.
+Finally,
+\Rpackage{digeR}\footnote{\url{http://cran.r-project.org/web/packages/digeR/index.html}},
+which is available on CRAN but not listed in the Chemometrics and
+Computational Physics Task View, provides a GUI interface for
+analysing 2D DIGE data. It allows to perform correlation analysis,
+score plot, classification, feature selection and power analysis for
+2D DIGE experiment data.
 
 \bigskip
 
-Suggestions for additional \R packages are welcome and will be added to the vignette. 
-Please send suggestions and possibly a short description and/or a example utilisation with code 
-to \url{lg390@cam.ac.uk}. The only requirement is that the package must be available 
-on an official package channel (CRAN, Bioconductor, R-forge, Omegahat), 
-i.e. not only available through a personal web page. 
+Suggestions for additional \R packages are welcome and will be added
+to the vignette.  Please send suggestions and possibly a short
+description and/or a example utilisation with code to
+\url{lg390@cam.ac.uk}. The only requirement is that the package must
+be available on an official package channel (CRAN, Bioconductor,
+R-forge, Omegahat), i.e. not only available through a personal web
+page.
 
 \clearpage
 
@@ -1256,7 +1287,8 @@ i.e. not only available through a personal web page.
 
 \section{Session information}\label{sec:sessionInfo} 
 
-All software and respective versions used in this document, as returned by \Rfunction{sessionInfo()} are detailed below.
+All software and respective versions used in this document, as
+returned by \Rfunction{sessionInfo()} are detailed below.
 
 <<sessioninfo, results='asis', echo=FALSE, echo=FALSE>>=
 toLatex(sessionInfo(), locale = FALSE)
