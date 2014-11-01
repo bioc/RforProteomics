@@ -1,4 +1,4 @@
----
+--
 output:
   BiocStyle::html_document
 ---
@@ -512,7 +512,10 @@ mouse kidney shared by
 and generates a plot with the mean spectrum and three slices of
 interesting *M/Z* regions.
 
-```{r mqims, cache=TRUE, warning=FALSE}
+<!-- Not running this code chunk as the access to the data (75M) -->
+<!-- on figshare seems to hang or become very slow at times -->
+
+```{r mqims, cache=TRUE, eval=FALSE, warning=FALSE}
 library("MALDIquant")
 library("MALDIquantForeign")
 
@@ -542,8 +545,10 @@ for (i in seq(along = avgPeaks)) {
 par(oldPar)
 ```
 
-```{r mqimspdf, ref.label='mqims', echo=FALSE, warning=FALSE, dev='pdf', fig.width=10, fig.height=6}
-```
+<!-- ```{r mqimspdf, ref.label='mqims', echo=FALSE, warning=FALSE, dev='pdf', fig.width=10, fig.height=6} -->
+<!-- ``` -->
+
+![ims-shiny screeshot](./figures/mqims-1.png.png)
 
 ### An interactive `shiny` app for Imaging mass spectrometry
 
@@ -589,23 +594,19 @@ layout(lout)
 cls <- getStockcol()
 par(mar = c(4, 4, 1, 1))
 plotDist(tan2009r1[which(fData(tan2009r1)$PLSDA == "mitochondrion"), ],
-         markers = featureNames(tan2009r1)
-         [which(fData(tan2009r1)$markers == "mitochondrion")],
+         markers = featureNames(tan2009r1)[which(fData(tan2009r1)$markers.orig == "mitochondrion")],
          mcol = cls[5])
 legend("topright", legend = "mitochondrion", bty = "n")
 plotDist(tan2009r1[which(fData(tan2009r1)$PLSDA == "ER/Golgi"), ],
-         markers = featureNames(tan2009r1)
-         [which(fData(tan2009r1)$markers == "ER")],
+         markers = featureNames(tan2009r1)[which(fData(tan2009r1)$markers.orig == "ER")],
          mcol = cls[2])
 legend("topright", legend = "ER", bty = "n")
 plotDist(tan2009r1[which(fData(tan2009r1)$PLSDA == "ER/Golgi"), ],
-         markers = featureNames(tan2009r1)
-         [which(fData(tan2009r1)$markers == "Golgi")],
+         markers = featureNames(tan2009r1)[which(fData(tan2009r1)$markers.orig == "Golgi")],
          mcol = cls[3])
 legend("topright", legend = "Golgi", bty = "n")
 plotDist(tan2009r1[which(fData(tan2009r1)$PLSDA == "PM"), ],
-         markers = featureNames(tan2009r1)
-         [which(fData(tan2009r1)$markers == "PM")],
+         markers = featureNames(tan2009r1)[which(fData(tan2009r1)$markers.orig == "PM")],
          mcol = cls[8])
 legend("topright", legend = "PM", bty = "n")
 plot2D(tan2009r1, fcol = "svm", cex = ptsze, method = "kpca")

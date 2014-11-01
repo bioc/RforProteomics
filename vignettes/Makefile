@@ -15,14 +15,14 @@ LATEXFILES = *.aux\
 
 all: 
 	make RforProteomics.pdf
-	make RProtVis.html
 	make poster
-	make clean
+	make RProtVis.html
+	# make clean
 
 
 setvars:
 ifeq (${R_HOME},)
-R_HOME= $(shell R RHOME)
+R_HOME=/opt/Rpatched/lib/R
 endif
 
 
@@ -32,10 +32,8 @@ RforProteomics.pdf:
 	cp vigsrc/RforProteomics.pdf .
 
 poster:
-	"$(R_HOME)/bin/R" CMD pdflatex Bioc2013_poster.Rnw
-	cp vigsrc/Bioc2013_poster.pdf .
-	"$(R_HOME)/bin/R" CMD pdflatex HUPO2014_poster.Rnw
-	cp vigsrc/HUPO2014_rbioc_poster.pdf ./HUPO2014_poster.pdf
+	cp vigsrc/Bioc2013_poster.pdf ./Bioc2013poster.pdf 
+	cp vigsrc/HUPO2014_rbioc_poster.pdf ./HUPO2014poster.pdf
 
 RProtVis.html: RProtVis.Rmd
 	"$(R_HOME)/bin/R" --vanilla -e "library(knitr); knit2html('RProtVis.Rmd'); purl('RProtVis.Rmd');"
@@ -66,15 +64,15 @@ stub:
 
 vig2: 
 	## Only locally, using default R-devel
-	make allclean
+	# make allclean
 	cp vigsrc/RforProteomics.Rnw .
 	cp vigsrc/RforProteomics.bib .
-	ln -s vigsrc/cache .
-	ln -s vigsrc/figure .
-	ln -s vigsrc/P00924.fasta .
-	ln -s vigsrc/F063721.dat-mztab.txt .
-	ln -s vigsrc/PXD000001_mztab.txt
-	ln -s vigsrc/TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.mzXML .
+	# ln -s vigsrc/cache .
+	# ln -s vigsrc/figure .
+	# ln -s vigsrc/P00924.fasta .
+	# ln -s vigsrc/F063721.dat-mztab.txt .
+	# ln -s vigsrc/PXD000001_mztab.txt
+	# ln -s vigsrc/TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.mzXML .
 	"$(R_HOME)/bin/R" CMD Sweave --engine=knitr::knitr --pdf RforProteomics.Rnw
 	bibtex RforProteomics
 	"$(R_HOME)/bin/R" CMD pdflatex RforProteomics.tex
@@ -98,8 +96,9 @@ clean:
 	rm -f PXD000001_mztab.txt
 	rm -rf output*xml
 	rm -f RforProteomics.tex 
-	rm -f RProtVis.md 
-	rm -f Bioc2013_poster.tex
+	rm -f RProtVis.md RProtVis.R
+	rm -f Bioc2013_poster.tex HUPO2014_poster.tex
+	rm -f Bioc2013_poster.R HUPO2014_poster.R
 	rm -f ProteomicsWorkflow.md ProteomicsWorkflow.html 
 
 allclean: 
