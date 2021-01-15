@@ -1,5 +1,8 @@
 # RforProteomics 1.0
 
+## Changes in version 1.28.1
+- Depend on rpx version 1.26.1 to rely on caching.
+
 ## Changes in version 1.27.1
 - Remove deprecated IPPD dependency
 
