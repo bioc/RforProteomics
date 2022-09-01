@@ -1,4 +1,8 @@
-# RforProteomics 1.0
+# RforProteomics 1
+
+## Changes in version 1.34.1
+
+- Remove failing chunk.
 
 ## Changes in version 1.33.1
 
