@@ -825,7 +825,7 @@ plotMsiSlice(spectra,
 par(oldPar)
 ```
 
-![mqmsi](./figures/mqmsi-1.png))]
+![mqmsi](./figures/mqmsi-1.png)
 
 ## An interactive `r CRANpkg("shiny")` app for Imaging mass spectrometry
 

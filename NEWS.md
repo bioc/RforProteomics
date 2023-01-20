@@ -1,5 +1,9 @@
 # RforProteomics 1
 
+## Changes in version 1.36.1
+
+- Fix error in vignette.
+
 ## Changes in version 1.35.1
 
 - Remove failing code chunk.
