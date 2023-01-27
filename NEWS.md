@@ -1,5 +1,10 @@
 # RforProteomics 1
 
+## Changes in version 1.36.2
+
+- I give up: remove that effing figure that is supposedly not found
+  despite being there.
+
 ## Changes in version 1.36.1
 
 - Fix error in vignette.
