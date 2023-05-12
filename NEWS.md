@@ -1,17 +1,13 @@
 # RforProteomics 1
 
-## Changes in version 1.39.2
+## Changes in version 1.38.1
 
-- Clearn up .gitignore and .Rbuildignore (in the hope to fix the
-  'figure not found error')
-
-## Changes in version 1.39.1
-
+- Clearn up .gitignore and .Rbuildignore.
 - Change paths to figures.
 
-## Changes in version 1.39.0
+## Changes in version 1.38.0
 
-- New Bioc devel version.
+- New Bioc releast version.
 
 ## Changes in version 1.37.4
 
